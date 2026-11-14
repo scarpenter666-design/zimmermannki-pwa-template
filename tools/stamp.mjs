@@ -55,6 +55,23 @@ for (const required of ['index.html', 'sw.js', 'app.config.js', 'manifest.webman
   }
 }
 
+// ── Manifest prüfen: "id" muss zur Adresse der App passen ──
+// Auf github.io heißt sie "/<Repo-Name>/", auf einer eigenen Subdomain "/".
+// Eine aus dem Template kopierte id würde zwei Apps für Chrome zur selben machen.
+try {
+  const manifest = JSON.parse(readFileSync(join(root, 'manifest.webmanifest'), 'utf8'));
+  const repo = (process.env.GITHUB_REPOSITORY || '').split('/')[1];
+  const ownDomain = files.includes('CNAME');
+  if (!manifest.id) {
+    console.warn('Warnung: In manifest.webmanifest fehlt das Feld "id".');
+  } else if (repo && !ownDomain && manifest.id !== `/${repo}/` && manifest.id !== '/') {
+    console.warn(`::warning file=manifest.webmanifest::"id" ist "${manifest.id}", das Repo heißt "${repo}". Erwartet: "/${repo}/" (oder "/" bei eigener Subdomain).`);
+  }
+} catch (error) {
+  console.error('Fehler: manifest.webmanifest ist kein gültiges JSON. ' + error.message);
+  process.exit(1);
+}
+
 // ── Version aus dem Inhalt berechnen (build.js selbst zählt nicht mit) ──
 const hash = createHash('sha256');
 for (const file of files) {

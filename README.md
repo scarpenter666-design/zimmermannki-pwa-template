@@ -34,21 +34,26 @@ Stand: **v1**. Enthalten ist die Beispiel-App „Hello ZimmermannKI“, die alle
 
 ## Lokal starten
 
-Im Ordner des Repos:
+Ein Terminal im Ordner des Repos öffnen (Windows: im Explorer in die Adresszeile `cmd` tippen und Enter).
 
-```bash
-python3 -m http.server 8000
-```
+| System | Befehl |
+|---|---|
+| Windows | `py -m http.server 8000` |
+| Windows, falls `py` fehlt | `npx serve -l 8000` (braucht Node.js) |
+| macOS, Linux | `python3 -m http.server 8000` |
 
-Dann `http://localhost:8000` öffnen. Die Version heißt lokal `dev`.
+Dann `http://localhost:8000` öffnen. Die Version heißt lokal `dev`. Beenden mit `Strg + C`.
 Direkt per Doppelklick auf `index.html` geht es **nicht** (Module und Service Worker brauchen einen Server).
 
 So testest du lokal den echten Auslieferungsstand samt Version:
 
 ```bash
 node tools/stamp.mjs
-cd _site && python3 -m http.server 8000
+cd _site
+py -m http.server 8000
 ```
+
+(macOS, Linux: `python3` statt `py`.)
 
 ---
 
@@ -75,6 +80,7 @@ Die `id` muss sich von allen anderen Apps unterscheiden. Vergeben sind: `ironlog
 ### Schritt 3 – `manifest.webmanifest`
 | Feld | Eintragen |
 |---|---|
+| `id` | Adresse der App ohne Domain. Auf `github.io`: `/<Repo-Name>/`, z. B. `/MeineApp/` (Groß- und Kleinschreibung wie im Repo-Namen). Auf eigener Subdomain: `/` |
 | `name` | wie `name` in `app.config.js` |
 | `short_name` | wie `shortName` |
 | `description` | ein Satz |
@@ -82,7 +88,14 @@ Die `id` muss sich von allen anderen Apps unterscheiden. Vergeben sind: `ironlog
 | `theme_color` | wie `--bg` |
 | `categories` | z. B. `["health"]`, `["finance"]`, `["utilities"]` |
 
-`start_url` und `scope` bleiben `./`. **`start_url` nie ändern:** Daran erkennt Chrome die installierte App. Ein Feld `id` gibt es absichtlich nicht (auf der gemeinsamen Adresse `github.io` würde ein falscher Wert Apps verwechseln).
+`start_url` und `scope` bleiben `./`.
+
+**Zu `id`:**
+- An `id` erkennt Chrome eine installierte App wieder. **Nach der ersten Veröffentlichung nie mehr ändern.** Sonst gilt die App als neu, und die alte Installation bekommt keine Updates des Manifests mehr.
+- Den Wert aus dem Template **nicht** stehen lassen. Zwei Apps mit derselben `id` auf `github.io` hält Chrome für dieselbe App.
+- Ein relativer Wert wie `./` funktioniert nicht. Er würde bei jeder App zu `/` und damit bei allen gleich.
+- Beim Veröffentlichen prüft `tools/stamp.mjs` den Wert. Passt er nicht zum Repo-Namen, steht im Reiter **Actions** eine gelbe Warnung.
+- Entscheide **vor** der ersten Veröffentlichung, ob die App auf `github.io` bleibt oder eine eigene Subdomain bekommt (Schritt 11). Davon hängt der Wert ab.
 
 ### Schritt 4 – `index.html`
 Im Block zwischen `▼ Pro App anpassen` und `▲ Pro App anpassen`:
@@ -126,7 +139,7 @@ backup.remindIfDue();                            // Backup-Erinnerung
 Export- und Import-Knöpfe kannst du aus der Beispiel-App übernehmen (`exportBtn`, `importBtn`, `importFile`).
 
 ### Schritt 8 – Lokal prüfen
-`python3 -m http.server 8000`, App öffnen, einmal durchklicken. In den Entwicklerwerkzeugen (F12) → **Console** darf nichts Rotes stehen.
+Server starten (siehe „Lokal starten“), App öffnen, einmal durchklicken. In den Entwicklerwerkzeugen (F12) → Reiter **Console** (deutsch: **Konsole**) darf nichts Rotes stehen.
 
 ### Schritt 9 – Veröffentlichen
 1. `git add -A`, `git commit -m "Erste Version"`, `git push`.
@@ -237,7 +250,7 @@ toast('Gespeichert.');
 2. **Jedes Script bekommt ein eigenes Tag.** Zwischen `<script src="…">` und `</script>` steht nie Code. Der Browser ignoriert ihn sonst.
 3. **Nie direkt `localStorage` benutzen**, immer `store`. Nie `localStorage.clear()`.
 4. **Nichts per CDN laden.** Bibliotheken nach `vendor/`, Schriften nach `fonts/`.
-5. **`id` und `start_url` nie ändern**, sobald jemand die App nutzt.
+5. **Nie mehr ändern, sobald jemand die App nutzt:** `id` in `app.config.js`, `id` in `manifest.webmanifest`, `start_url`.
 6. **`sw.js` und `build.js` nicht anfassen.**
 7. **Keine Geheimnisse ins Repo.** Es ist öffentlich.
 8. **Nie eine eigene Domain für das Repo `scarpenter666-design.github.io` oder auf Account-Ebene einrichten.** Das würde die Adressen aller Apps verschieben. Eigene Domains nur pro Projekt-Repo.
@@ -275,9 +288,11 @@ Der Service Worker versteht auch die alten Update-Nachrichten (`"skip"` und `{ty
 | Problem | Prüfen |
 |---|---|
 | Kein Update-Banner | Reiter **Actions**: Ist **Deploy** grün? In der App: **Einstellungen** → **Nach Update suchen**. |
-| App lädt nicht offline | Einmal online öffnen und 5 Sekunden warten. F12 → **Application** → **Service workers**: Status `activated`? |
+| App lädt nicht offline | Einmal online öffnen und 5 Sekunden warten. F12 → Reiter **Application** (deutsch: **App**) → **Service workers** (deutsch: **Service Worker**): Steht dort „activated and is running“ (deutsch: „aktiviert und wird ausgeführt“)? |
 | Knopf „Installieren“ fehlt | App ist schon installiert, oder der Browser bietet es nicht an. Menü ⋮ → **App installieren** probieren. |
-| Seite bleibt weiß | F12 → **Console**. Häufig: Tippfehler in `app.config.js`. |
+| Seite bleibt weiß | F12 → Reiter **Console** (deutsch: **Konsole**). Häufig: Tippfehler in `app.config.js`. |
+| Manifest prüfen | F12 → Reiter **Application** (deutsch: **App**) → **Manifest**. Dort stehen Name, Icons und Warnungen zur Installierbarkeit. |
+| Gespeicherte Daten ansehen | F12 → **Application** (**App**) → **Local storage** (deutsch: **Lokaler Speicher**). Die Einträge der App beginnen mit ihrer `id`. |
 | Deploy schlägt fehl | **Settings** → **Pages** → **Source** muss `GitHub Actions` sein. |
 | Icon auf Android abgeschnitten | In `tools/icons.html` den Regler für das Maskable-Icon kleiner stellen. |
 

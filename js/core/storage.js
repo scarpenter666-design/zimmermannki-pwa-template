@@ -126,8 +126,23 @@ export async function openStore(options = {}) {
     try { await writeText(META, JSON.stringify(meta)); } catch { /* Meta ist nicht kritisch */ }
   }
 
+  // Defekten Rohtext beiseitelegen. Höchstens EINE Kopie je Inhalt:
+  // weder mehrfach pro Sitzung noch bei jedem App-Start erneut.
+  const quarantined = new Map();              // name -> zuletzt gesicherter Rohtext
+
   async function quarantine(name, raw, reason) {
-    const key = `${internal}corrupt.${name}.${Date.now()}`;
+    if (quarantined.get(name) === raw) return;          // in dieser Sitzung schon erledigt
+    quarantined.set(name, raw);
+
+    const copyPrefix = `${internal}corrupt.${name}.`;
+    for (const existing of await backend.keys()) {     // Kopie aus früherer Sitzung?
+      if (existing.startsWith(copyPrefix) && (await backend.get(existing)) === raw) {
+        problems.push({ type: 'corrupt', name, key: existing, reason });
+        return;
+      }
+    }
+
+    const key = copyPrefix + Date.now();
     try {
       await writeText(key, raw);
       problems.push({ type: 'corrupt', name, key, reason });
