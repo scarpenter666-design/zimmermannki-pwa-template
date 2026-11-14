@@ -195,6 +195,38 @@ Checkliste in der `README.md`, Abschnitt „Neue App aus dem Template erstellen�
 
 Auftrag (15.11.2026): Finanz-App neu aufbauen. Repo `finanzen-app`, Verschlüsselung an, Passwort als Standard, Funktionen der alten App, Chart.js aus `vendor/`. Lokal testen. **Nicht** auf die Subdomain bringen, das macht Sven später.
 
-Stand: siehe letzter Eintrag unten.
+### Stand 15.11.2026, 01:00: gebaut und lokal getestet, noch nirgends veröffentlicht
+
+- Der Code liegt **nicht auf GitHub**. Das Repo `finanzen-app` existiert noch nicht. Sven hat ihn als `finanzen-app.zip` bekommen (kompletter Ordner mit einem lokalen Commit auf `main`).
+- Entstanden aus dem Template-Stand `3e5903e` (v1.1a).
+- Lokaler Test `python3 tests/finanzen.py` im App-Ordner: **20/20**.
+
+**App-spezifische Dateien:** `js/app.js`, `css/app.css`, `index.html`, `app.config.js`, `manifest.webmanifest`, `icons/`, `vendor/chart.umd.js` (Chart.js 4.4.1), `tests/finanzen.py`, `README.md`. Alles unter `js/core/`, `sw.js`, `tools/` ist unverändert aus dem Template.
+
+**Konfiguration:** `id: 'meine-finanzen'`, `storage.schemaVersion: 1`, `storage.encryption: 'pin'`, `manifestId: null`, Manifest-`id` `/` (passt nur zur Subdomain).
+
+**Speicher:** `meine-finanzen.entries`, `.income_cats`, `.expense_cats`, `.month`. Die Namen sind so gewählt, dass `legacyPrefixAdapter({ prefix: 'fin_', … })` alte Backups direkt abbildet.
+
+**Funktionen wie in der alten App:** Einnahmen und Ausgaben mit Kategorie und Datum, Fixposten (werden ab ihrem Startmonat in jeden Monat kopiert), Übertrag aus Vormonaten, Monatswahl (drei Monate zurück, zwei voraus), Ringdiagramm der Ausgaben mit Anteilen, eigene Kategorien.
+
+**Abweichungen von der alten App:**
+- Passwort statt 4-stelligem PIN, Daten verschlüsselt.
+- Fünf Reiter: Übersicht, Einnahmen, Ausgaben, Fix, **Mehr**. „Mehr“ enthält Kategorien, Backup, Sicherheit, App. Die alte App hatte einen eigenen Reiter „Kategorien“.
+- Betrag als Text mit Komma (`12,50` und `1.234,56` gehen).
+- Löscht man eine verwendete Kategorie, erscheinen ihre Einträge unter „Ohne Kategorie“ (früher verschwanden sie aus den Listen).
+- Farben im ZimmermannKI-Stil, Grün/Rot/Gelb nur für Beträge.
+- Die Zeile „Verfügbar“ in der Übersicht ist ohne Übertrag, die Karte oben mit Übertrag (wie früher, jetzt beschriftet).
+
+**Nächste Schritte:**
+1. Sven legt das Repo `finanzen-app` an (**Use this template** oder leeres Repo) und stellt **Settings → Pages → Source** auf `GitHub Actions`.
+2. Code einspielen (Push-Zugriff über das Werkzeug `add_repo` mit `access: "push"`, oder Sven lädt den Inhalt der ZIP hoch).
+3. **Achtung:** Ohne Subdomain würde die App unter `…github.io/finanzen-app/` laufen, also auf der gemeinsamen Origin, und `stamp.mjs` warnt nicht (Wert `/` ist erlaubt), obwohl die `id` dort falsch wäre. Erst die Subdomain einrichten (`docs/eigene-subdomain.md`), dann echte Daten eingeben.
+4. Schritt-für-Schritt-Anleitung für Hostinger (hPanel) und GitHub schreiben. Sven hat sie verlangt, sie ist noch nicht geschrieben. Grundlage: `docs/eigene-subdomain.md`.
+5. Auf dem Pixel testen: Entsperren, Tastatur, Passwort-Manager, Dauer.
+
+**Nicht getestet:** echtes Handy, iOS, viele hundert Einträge, Verhalten über den Jahreswechsel hinaus (Logik ist aus der alten App übernommen).
+
+Älterer Stand:
+
 
 - 15.11.2026, 00:45: Noch nicht begonnen. Das Repo `finanzen-app` existiert noch nicht (Sven legt es an).
