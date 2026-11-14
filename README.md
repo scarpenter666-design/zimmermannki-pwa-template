@@ -64,8 +64,16 @@ Rechne mit 30 bis 60 Minuten bis zur installierbaren App.
 ### Schritt 1 – Repo anlegen
 1. Auf GitHub das Repo `zimmermannki-pwa-template` öffnen.
 2. Knopf **Use this template** → **Create a new repository**.
+   (Fehlt der Knopf: im Template-Repo unter **Settings** → **General** den Haken **Template repository** setzen.)
 3. **Repository name:** z. B. `MeineApp`. **Public** auswählen. **Create repository**.
-4. Repo auf den Rechner klonen.
+4. Im neuen Repo sofort: **Settings** → **Pages** → **Build and deployment** → **Source:** `GitHub Actions`.
+   Der erste Lauf unter **Actions** ist rot, weil Pages beim Anlegen noch aus war. Das ist normal und erledigt sich mit dem ersten Push.
+5. Repo auf den Rechner holen. Terminal öffnen und eingeben:
+
+   ```bash
+   git clone https://github.com/scarpenter666-design/MeineApp.git
+   cd MeineApp
+   ```
 
 ### Schritt 2 – `app.config.js`
 | Feld | Eintragen |
@@ -106,6 +114,11 @@ Im Block zwischen `▼ Pro App anpassen` und `▲ Pro App anpassen`:
 | `<meta name="theme-color">` | wie `--bg` |
 | `<meta name="apple-mobile-web-app-title">` | wie `shortName` |
 
+Weiter unten, außerhalb des Blocks:
+| Zeile | Eintragen |
+|---|---|
+| `<h1 class="app__title" id="appTitle">` | App-Name (die Überschrift oben in der App) |
+
 Danach den Inhalt von `<main class="app__main">` durch deine Oberfläche ersetzen.
 
 ### Schritt 5 – `css/tokens.css`
@@ -138,14 +151,19 @@ backup.remindIfDue();                            // Backup-Erinnerung
 
 Export- und Import-Knöpfe kannst du aus der Beispiel-App übernehmen (`exportBtn`, `importBtn`, `importFile`).
 
+Wenn du Teile der Beispiel-App behältst: Den Eintrag `migrations: { 2: … }` bei `openStore(…)` löschen. Er gehört zu den Beispieldaten und passt nicht zu `storage.schemaVersion: 1`.
+
+Diese Checkliste ist einmal komplett durchgespielt worden (neue App „Meine App“ mit Zähler): installierbar, offline lauffähig, Daten unter `meineapp.…`.
+
 ### Schritt 8 – Lokal prüfen
 Server starten (siehe „Lokal starten“), App öffnen, einmal durchklicken. In den Entwicklerwerkzeugen (F12) → Reiter **Console** (deutsch: **Konsole**) darf nichts Rotes stehen.
 
 ### Schritt 9 – Veröffentlichen
 1. `git add -A`, `git commit -m "Erste Version"`, `git push`.
-2. Auf GitHub im Repo: **Settings** → **Pages** → **Build and deployment** → **Source:** `GitHub Actions`.
-3. Reiter **Actions**: Der Lauf **Deploy** muss grün werden (ca. 1 Minute). Falls er vor Schritt 2 rot wurde: **Re-run all jobs**.
-4. Die App liegt unter `https://scarpenter666-design.github.io/MeineApp/`.
+2. Reiter **Actions**: Der Lauf **Deploy** muss grün werden (ca. 1 Minute).
+   Rot mit der Meldung „Get Pages site failed“? Dann fehlt die Einstellung aus Schritt 1 Nr. 4. Nachholen, dann im Lauf auf **Re-run all jobs**.
+   Gelbe Warnung zu `id`? Dann stimmt das Feld `id` in `manifest.webmanifest` nicht (Schritt 3).
+3. Die App liegt unter `https://scarpenter666-design.github.io/MeineApp/`.
 
 ### Schritt 10 – Aufs Handy
 - **Android (Chrome):** Seite öffnen → Knopf **Installieren** in der App oder Menü ⋮ → **App installieren**.
