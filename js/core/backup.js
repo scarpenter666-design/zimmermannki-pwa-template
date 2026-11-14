@@ -11,9 +11,11 @@
      { app, format: 1, schemaVersion, exported, codec: "json", data: { name: wert } }
 
    Geheime Einträge (storage.secretNames) stehen nie in der Datei.
-   Vorbereitet für crypto.js: Ein `codec` mit { name, encode, decode }
-   kann das Feld `data` später verschlüsseln, ohne dass sich hier
-   etwas ändert.
+   Verschlüsselte Backups: einen Codec aus crypto.js mitgeben,
+     backup.download({ codec: backupCodec(passwort) })
+     backup.importText(text, { codec: backupCodec(passwort) })
+   Dann steht in der Datei codec: "pbkdf2-aes-gcm" und `data` ist
+   verschlüsselt. Unverschlüsselte (alte) Backups bleiben lesbar.
    ============================================================ */
 import { showNotice } from './notice.js';
 
@@ -24,7 +26,7 @@ export class BackupError extends Error {
   constructor(code, message) {
     super(message);
     this.name = 'BackupError';
-    this.code = code; // invalid | wrong-app | newer | codec | format
+    this.code = code; // invalid | wrong-app | newer | codec | password | format
   }
 }
 
@@ -59,15 +61,15 @@ export function legacyPrefixAdapter({ prefix, version = 1, schemaVersion = 1, ig
  * @param {object}   options
  * @param {object}   options.store        von openStore()
  * @param {Array}    [options.adapters]   Funktionen für alte Dateiformate
- * @param {object}   [options.codec]      später: verschlüsselnder Codec für die Datei
+ * @param {object}   [options.codec]      Standard-Codec für verschlüsselte Backups (pro Aufruf überschreibbar)
  */
-export function createBackup({ store, adapters = [], codec = null }) {
+export function createBackup({ store, adapters = [], codec: defaultCodec = null }) {
   const config = (self.APP_CONFIG && self.APP_CONFIG.backup) || {};
   const remindAfterDays = config.remindAfterDays ?? 30;
   const snoozeDays = config.snoozeDays ?? 7;
 
   /** Baut den Inhalt der Backup-Datei. */
-  async function exportText() {
+  async function exportText({ codec = defaultCodec } = {}) {
     const data = await store.snapshot();
     const file = {
       app: store.id,
@@ -82,8 +84,8 @@ export function createBackup({ store, adapters = [], codec = null }) {
   }
 
   /** Exportiert als Datei: auf dem Handy über "Teilen", sonst als Download. */
-  async function download() {
-    const { filename, text } = await exportText();
+  async function download(options = {}) {
+    const { filename, text } = await exportText(options);
     let done = false;
     try {
       const file = new File([text], filename, { type: 'application/json' });
@@ -114,7 +116,7 @@ export function createBackup({ store, adapters = [], codec = null }) {
    * Wirft BackupError, wenn sie nicht passt.
    * @returns {Promise<{schemaVersion:number, exported:string|null, data:object, source:string, entries:number, needsMigration:boolean}>}
    */
-  async function inspect(text) {
+  async function inspect(text, { codec = defaultCodec } = {}) {
     let file;
     try { file = JSON.parse(text); }
     catch { throw new BackupError('invalid', 'Das ist keine gültige Backup-Datei (kein JSON).'); }
@@ -134,9 +136,14 @@ export function createBackup({ store, adapters = [], codec = null }) {
       const usedCodec = file.codec || 'json';
       if (usedCodec !== 'json') {
         if (!codec || codec.name !== usedCodec) {
-          throw new BackupError('codec', 'Dieses Backup ist verschlüsselt und kann hier nicht gelesen werden.');
+          // Die App fragt daraufhin nach dem Backup-Passwort und ruft erneut mit Codec auf.
+          throw new BackupError('codec', 'Dieses Backup ist verschlüsselt. Bitte das Backup-Passwort eingeben.');
         }
-        data = await codec.decode(data);
+        try {
+          data = await codec.decode(data);
+        } catch (error) {
+          throw new BackupError('password', (error && error.message) || 'Das Backup-Passwort stimmt nicht.');
+        }
       }
       result = { schemaVersion: file.schemaVersion, exported: file.exported || null, data, source: 'Backup dieser App' };
     } else {
@@ -167,8 +174,8 @@ export function createBackup({ store, adapters = [], codec = null }) {
    * Spielt ein Backup ein. Der aktuelle Stand wird vorher als
    * Wiederherstellungspunkt gesichert (store.undoRestore() macht es rückgängig).
    */
-  async function importText(text) {
-    const checked = await inspect(text);
+  async function importText(text, options = {}) {
+    const checked = await inspect(text, options);
     await store.restore(checked.data, { fromVersion: checked.schemaVersion });
     return checked;
   }
@@ -189,7 +196,7 @@ export function createBackup({ store, adapters = [], codec = null }) {
   }
 
   /** Zeigt den Hinweis, wenn er fällig ist. Gibt true zurück, wenn angezeigt. */
-  function remindIfDue() {
+  function remindIfDue({ onBackupRequested = null } = {}) {
     if (!isReminderDue()) return false;
     const last = store.getMeta().lastBackupAt;
     showNotice({
@@ -198,7 +205,11 @@ export function createBackup({ store, adapters = [], codec = null }) {
         ? `Dein letztes Backup ist über ${remindAfterDays} Tage alt.`
         : 'Du hast noch kein Backup deiner Daten.',
       actions: [
-        { label: 'Jetzt sichern', primary: true, onClick: async notice => { const r = await download(); if (!r.cancelled) notice.close(); } },
+        { label: 'Jetzt sichern', primary: true, onClick: async notice => {
+          // Apps mit Verschlüsselung geben onBackupRequested mit und fragen dort nach dem Passwort.
+          const result = onBackupRequested ? await onBackupRequested() : await download();
+          if (result && !result.cancelled) notice.close();
+        } },
         { label: 'Später', onClick: async notice => { await snooze(); notice.close(); } }
       ]
     });

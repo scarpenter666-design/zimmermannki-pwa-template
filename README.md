@@ -3,7 +3,7 @@
 Grundgerüst für installierbare Web-Apps (PWA) von ZimmermannKI.
 Kein Framework, kein Bundler. Das Repo läuft so, wie es ist, im Browser.
 
-Stand: **v1**. Enthalten ist die Beispiel-App „Hello ZimmermannKI“, die alle Module benutzt.
+Stand: **v1.1a** (v1 plus Verschlüsselung und strenge Sicherheitsregel). Enthalten ist die Beispiel-App „Hello ZimmermannKI“, die alle Module benutzt.
 
 ---
 
@@ -23,6 +23,8 @@ Stand: **v1**. Enthalten ist die Beispiel-App „Hello ZimmermannKI“, die alle
 | `js/core/update-banner.js` + `sw-register.js` | „Neue Version verfügbar“ | nein |
 | `js/core/install.js` | Installieren-Knopf, iOS-Hinweis | nein |
 | `js/core/notice.js` | Hinweisleisten und kurze Meldungen | nein |
+| `js/core/crypto.js` | Verschlüsselung mit PIN oder Passwort (optional) | nein |
+| `js/core/lock-screen.js` | Sperrbildschirm und Passwort-Dialog (optional) | nein |
 | `sw.js` | Service Worker (Offline, Updates) | **nie** |
 | `build.js` | Version + Dateiliste, wird beim Deploy automatisch gesetzt | **nie** |
 | `tools/stamp.mjs` | setzt Version und Dateiliste | nein |
@@ -82,6 +84,7 @@ Rechne mit 30 bis 60 Minuten bis zur installierbaren App.
 | `name` | voller Name, z. B. `Meine App` |
 | `shortName` | höchstens 12 Zeichen |
 | `storage.schemaVersion` | `1` |
+| `storage.encryption` | `'none'`, oder `'pin'` für Finanz- und Gesundheitsdaten (siehe „Verschlüsselung“). **Vor dem ersten Start festlegen.** |
 
 Die `id` muss sich von allen anderen Apps unterscheiden. Vergeben sind: `ironlog`, `nutricoach`, `nadabrahma`, `meine-finanzen`, `hello`.
 
@@ -254,6 +257,61 @@ initInstall({ button: document.getElementById('installBtn'), store });
 
 Der Knopf braucht im HTML das Attribut `hidden`. Er erscheint nur, wenn der Browser die Installation anbietet.
 
+### Verschlüsselung (`crypto.js`, `lock-screen.js`)
+
+Einschalten in `app.config.js`:
+
+```js
+storage: { encryption: 'pin', autoLockMinutes: 5, … }
+```
+
+Im App-Code (so steht es in der Beispiel-App, Abschnitt 0 von `js/app.js`):
+
+```js
+const { openVault, startAutoLock } = await import('./core/crypto.js');
+const { unlockApp } = await import('./core/lock-screen.js');
+const vault = await openVault();
+const codec = await unlockApp({ vault });        // Sperrbildschirm, wartet bis entsperrt
+const store = await openStore({ codec });         // ab hier alles wie gewohnt
+startAutoLock({ minutes: 5, onLock: () => location.reload() });
+```
+
+Was passiert:
+- Beim ersten Start vergibt der Nutzer einen PIN (mindestens 6 Ziffern, keine einfachen Muster wie `123456`) oder ein Passwort (mindestens 8 Zeichen). Die Oberfläche empfiehlt das Passwort.
+- Jeder Eintrag liegt mit AES-GCM verschlüsselt im Speicher. Der Schlüssel dazu wird mit PBKDF2 (SHA-256, 600 000 Runden) aus PIN oder Passwort abgeleitet.
+- PIN und Passwort werden nirgends gespeichert, auch kein Hash davon.
+- Backups werden mit einem eigenen Backup-Passwort verschlüsselt (`backupCodec(passwort)`). So lassen sie sich auch auf einem anderen Gerät einspielen.
+- „PIN vergessen?“ auf dem Sperrbildschirm kann nur alles löschen. Es gibt keine Hintertür.
+
+**Schützt vor:**
+- jemandem, der den Browser-Speicher ausliest (Entwicklerwerkzeuge, Geräte-Backup),
+- anderen Apps auf derselben Adresse, solange die App gesperrt ist,
+- Mitlesen einer Backup-Datei.
+
+**Schützt nicht vor:**
+- einem kurzen PIN. 6 Ziffern sind eine Million Möglichkeiten. Wer die verschlüsselten Daten kopiert hat, probiert sie außerhalb der App durch, in Stunden bis wenigen Tagen. Ein Passwort ist deutlich besser.
+- Schadcode, der läuft, während die App entsperrt ist,
+- einem entsperrten Handy in fremder Hand,
+- Löschen der Daten,
+- Vergessen. PIN weg heißt Daten weg. Darum regelmäßig ein Backup machen und das Backup-Passwort aufschreiben.
+
+**Im Klartext bleiben:** die Namen der Einträge (z. B. `meineapp.entries`), Zeitstempel und Datenversion, sowie Einträge aus `storage.rawNames`.
+
+**Nicht enthalten:** Verschlüsselung nachträglich für vorhandene Klartext-Daten einschalten. Entscheide das vor dem ersten Start.
+
+### Sicherheitsregel (Content-Security-Policy)
+
+In `index.html` steht ein `<meta http-equiv="Content-Security-Policy" …>`. Damit führt der Browser nur Scripts und Styles aus eigenen Dateien aus. Eingeschleuster Code läuft nicht.
+
+Was das für deinen Code heißt:
+- kein `onclick="…"`, kein `<script>` mit Inhalt, kein `style="…"` im HTML. Farben und Abstände per Klasse in einer CSS-Datei, Verhalten per `addEventListener`.
+- `element.style.farbe = …` im JavaScript bleibt erlaubt.
+- keine Verbindung zu fremden Servern. Braucht die App eine, ihre Adresse in der Regel bei `connect-src` ergänzen, z. B. `connect-src 'self' https://api.example.com`.
+
+Verstöße stehen rot in F12 → **Console** (**Konsole**) und beginnen mit „Refused to …“ bzw. nennen die „Content Security Policy“.
+
+Grenze: Schutz gegen Einbetten in fremde Seiten (`frame-ancestors`) geht nur über einen HTTP-Header. Den kann GitHub Pages nicht setzen.
+
 ### Hinweise (`notice.js`)
 
 ```js
@@ -265,7 +323,7 @@ toast('Gespeichert.');
 
 ## Regeln
 
-1. **Kein `onclick="…"` im HTML.** Immer `addEventListener` in `js/app.js`. (Vorbereitung für die strenge Sicherheitsregel in v1.1.)
+1. **Kein `onclick="…"`, kein `style="…"`, kein `<script>` mit Inhalt im HTML.** Die Sicherheitsregel in `index.html` blockiert das. Immer `addEventListener` in `js/app.js` und Klassen in einer CSS-Datei.
 2. **Jedes Script bekommt ein eigenes Tag.** Zwischen `<script src="…">` und `</script>` steht nie Code. Der Browser ignoriert ihn sonst.
 3. **Nie direkt `localStorage` benutzen**, immer `store`. Nie `localStorage.clear()`.
 4. **Nichts per CDN laden.** Bibliotheken nach `vendor/`, Schriften nach `fonts/`.
@@ -320,14 +378,11 @@ Der Service Worker versteht auch die alten Update-Nachrichten (`"skip"` und `{ty
 
 ---
 
-## Noch nicht enthalten (kommt mit v1.1)
+## Noch nicht enthalten
 
-- `crypto.js`: Verschlüsselung mit PIN oder Passwort
-- `ai.js`: KI-Aufrufe (persönlich oder über Supabase mit Anmeldung)
-- strenge Content-Security-Policy
-- `tools/new-app.mjs`: Setup-Skript statt Checkliste
-
-`storage.js` und `backup.js` haben dafür schon den Anschluss (`codec`).
+- `ai.js`: KI-Aufrufe im Modus „persönlich“ (geplant als v1.1b)
+- Setup-Skript statt Checkliste (zurückgestellt)
+- KI über einen eigenen Server mit Anmeldung (zurückgestellt)
 
 ---
 

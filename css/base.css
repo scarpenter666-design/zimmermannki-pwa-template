@@ -222,6 +222,21 @@ dialog.dialog {
 dialog.dialog::backdrop { background: rgba(0, 0, 0, 0.7); }
 .dialog__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 
+/* ── Sperrbildschirm (lock-screen.js) ── */
+.cp-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--gap) + env(safe-area-inset-top, 0px)) var(--gap) calc(var(--gap) + env(safe-area-inset-bottom, 0px));
+  background: var(--bg);
+  overflow-y: auto;
+}
+.cp-lock__box { width: 100%; max-width: 380px; }
+.cp-lock__error { color: var(--danger); font-size: 14px; min-height: 1.4em; }
+
 /* ── Breite Bildschirme ── */
 @media (min-width: 600px) {
   .app { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }

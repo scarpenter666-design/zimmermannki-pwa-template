@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 
+<!-- Sicherheitsregel (Content-Security-Policy): Der Browser führt nur Scripts
+     und Styles aus eigenen Dateien aus. Kein Inline-Code, keine fremden Server.
+     Braucht die App später einen fremden Server (z. B. eine KI-Schnittstelle),
+     dessen Adresse bei connect-src ergänzen: connect-src 'self' https://api.example.com -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+
 <!-- ▼ Pro App anpassen (siehe README, Schritt 4) -->
 <title>Hello ZimmermannKI</title>
 <meta name="description" content="Beispiel-App des zimmermannki-pwa-template">
@@ -80,6 +86,15 @@
         </div>
         <div class="row" id="undoRow" hidden>
           <button type="button" class="btn btn--ghost" id="undoBtn">Letzten Import rückgängig machen</button>
+        </div>
+      </div>
+
+      <div class="card stack" id="securityCard" hidden>
+        <h2>Sicherheit</h2>
+        <p class="muted">Die Daten dieser App sind verschlüsselt. Ohne PIN oder Passwort sind sie nicht lesbar, auch nicht für dich.</p>
+        <div class="row">
+          <button type="button" class="btn btn--ghost" id="lockBtn">Jetzt sperren</button>
+          <button type="button" class="btn btn--ghost" id="changeSecretBtn">PIN oder Passwort ändern</button>
         </div>
       </div>
 

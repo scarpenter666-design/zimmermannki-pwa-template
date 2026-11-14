@@ -47,6 +47,20 @@ export function localStorageBackend(storage = globalThis.localStorage) {
   };
 }
 
+/**
+ * Löscht ALLE Daten einer App endgültig, ohne sie zu öffnen und ohne
+ * Wiederherstellungspunkt. Gedacht für "PIN vergessen": Verschlüsselte
+ * Daten sind dann ohnehin nicht mehr lesbar.
+ * Fasst nur Keys an, die mit "<id>." beginnen, plus die angegebenen alten Keys.
+ */
+export async function eraseAppData({ id = self.APP_CONFIG && self.APP_CONFIG.id, legacyKeys, backend = localStorageBackend() } = {}) {
+  if (!id || !/^[a-z0-9-]+$/.test(id)) throw new StorageError('name', 'Ungültige App-id.');
+  const old = Object.values(legacyKeys || (self.APP_CONFIG && self.APP_CONFIG.storage && self.APP_CONFIG.storage.legacyKeys) || {});
+  for (const key of await backend.keys()) {
+    if (key.startsWith(id + '.') || old.includes(key)) await backend.remove(key);
+  }
+}
+
 const clone = value => (value === undefined ? undefined : JSON.parse(JSON.stringify(value)));
 
 /**
@@ -258,7 +272,7 @@ export async function openStore(options = {}) {
   }
 
   const assertWritable = name => {
-    if (status === 'locked') throw new StorageError('locked', 'Der Speicher ist gesperrt.');
+    if (status === 'locked') throw new StorageError('locked', 'Der Speicher ist verschlüsselt und wurde ohne Schlüssel geöffnet.');
     if (status === 'newer') throw new StorageError('newer', 'Die Daten stammen aus einer neueren App-Version. Bitte die App aktualisieren.');
     if (readOnly) throw new StorageError('migration', 'Die Daten konnten nicht umgestellt werden. Es wurde nichts verändert.');
     if (name && blocked.has(name)) throw new StorageError('blocked', `"${name}" ist beschädigt und wird nicht überschrieben.`);

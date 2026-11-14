@@ -24,6 +24,16 @@ self.APP_CONFIG = {
     // Struktur ändert, und in js/app.js eine Migration ergänzen.
     schemaVersion: 2,
 
+    // Verschlüsselung: 'none' oder 'pin'.
+    // 'pin' = Daten liegen verschlüsselt im Speicher, die App fragt beim
+    // Start nach PIN (mind. 6 Ziffern) oder Passwort (mind. 8 Zeichen).
+    // Für Finanz- oder Gesundheitsdaten. Vor dem ersten Start festlegen:
+    // Ein späterer Wechsel stellt vorhandene Daten nicht um.
+    encryption: 'none',
+
+    // Nur mit encryption 'pin': nach so vielen Minuten ohne Bedienung sperren.
+    autoLockMinutes: 5,
+
     // Nur für den Umzug alter Apps: bestehende localStorage-Keys
     // weiterverwenden. Beispiel IronLog: { state: 'ironlog4' }
     legacyKeys: {},
