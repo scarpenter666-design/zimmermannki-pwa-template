@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Leuchten im Inneren des Sechsecks -->
+    <radialGradient id="core" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#00e5ff" stop-opacity="0.55"/>
+      <stop offset="0.55" stop-color="#00e5ff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#00e5ff" stop-opacity="0.02"/>
+    </radialGradient>
+    <!-- Schwacher Schein im Hintergrund -->
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#00e5ff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#00e5ff" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Neon-Schein um Linien -->
+    <filter id="neon" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="hex"><path d="M256 104 L388 180 L388 332 L256 408 L124 332 L124 180 Z"/></clipPath>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="#050607"/>
+  <rect width="512" height="512" rx="96" fill="url(#halo)"/>
+
+  <!-- Leiterbahnen nach außen -->
+  <g fill="none" stroke="#00e5ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" filter="url(#soft)" opacity="0.9">
+    <path d="M256 104 V58"/>
+    <path d="M256 408 V454"/>
+    <path d="M388 180 H414 L442 152"/>
+    <path d="M388 332 H414 L442 360"/>
+    <path d="M124 180 H98 L70 152"/>
+    <path d="M124 332 H98 L70 360"/>
+    <path d="M388 256 H452"/>
+    <path d="M124 256 H60"/>
+    <path d="M322 142 L346 118 H386"/>
+    <path d="M190 370 L166 394 H126"/>
+  </g>
+  <!-- Lötpunkte -->
+  <g fill="#050607" stroke="#00e5ff" stroke-width="5" filter="url(#soft)">
+    <circle cx="256" cy="50" r="8"/>
+    <circle cx="256" cy="462" r="8"/>
+    <circle cx="448" cy="146" r="8"/>
+    <circle cx="448" cy="366" r="8"/>
+    <circle cx="64" cy="146" r="8"/>
+    <circle cx="64" cy="366" r="8"/>
+    <circle cx="460" cy="256" r="8"/>
+    <circle cx="52" cy="256" r="8"/>
+  </g>
+  <g fill="#00e5ff" filter="url(#soft)">
+    <circle cx="392" cy="118" r="6"/>
+    <circle cx="120" cy="394" r="6"/>
+  </g>
+
+  <!-- Sechseck: dunkle Fläche, innerer Schein, feine Bahnen -->
+  <path d="M256 104 L388 180 L388 332 L256 408 L124 332 L124 180 Z" fill="#061317"/>
+  <g clip-path="url(#hex)">
+    <rect x="100" y="90" width="312" height="332" fill="url(#core)"/>
+    <g fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.38">
+      <path d="M124 222 H160 L176 238"/>
+      <path d="M388 290 H352 L336 274"/>
+      <path d="M214 128 V160 L230 176"/>
+      <path d="M298 384 V352 L282 336"/>
+    </g>
+    <!-- innerer Rand, nach innen leuchtend -->
+    <path d="M256 104 L388 180 L388 332 L256 408 L124 332 L124 180 Z" fill="none" stroke="#00e5ff" stroke-width="34" opacity="0.22" filter="url(#neon)"/>
+  </g>
+  <path d="M256 104 L388 180 L388 332 L256 408 L124 332 L124 180 Z" fill="none" stroke="#00e5ff" stroke-width="12" stroke-linejoin="round" filter="url(#neon)"/>
+
+  <!-- Z als Leiterbahn mit Lötpunkten -->
+  <path d="M206 206 H306 L206 306 H306" fill="none" stroke="#00e5ff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" opacity="0.35" filter="url(#neon)"/>
+  <path d="M206 206 H306 L206 306 H306" fill="none" stroke="#f2fbfd" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#050607" stroke="#00e5ff" stroke-width="4">
+    <circle cx="206" cy="206" r="6"/>
+    <circle cx="306" cy="306" r="6"/>
+  </g>
+</svg>

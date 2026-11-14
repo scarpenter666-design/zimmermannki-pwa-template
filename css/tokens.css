@@ -1,0 +1,58 @@
+/* ============================================================
+   tokens.css – Farben, Schriften, Abstände.
+   Für eine neue App reicht es meist, --accent und die Namen
+   der Schriften zu ändern.
+   Standard: ZimmermannKI-Stil, Schwarz mit Neon-Cyan.
+   Bei Änderung von --bg auch anpassen:
+     index.html            <meta name="theme-color">
+     manifest.webmanifest  "theme_color" und "background_color"
+   ============================================================ */
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('../fonts/dm-sans-latin-variable.woff2') format('woff2');
+  font-weight: 100 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bebas Neue';
+  src: url('../fonts/bebas-neue-latin-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Flächen */
+  --bg: #050607;
+  --surface: #0e1113;
+  --surface-2: #171c1f;
+  --border: #252c30;
+
+  /* Text */
+  --text: #eef3f5;
+  --text-muted: #8d999f;
+
+  /* Akzent */
+  --accent: #00e5ff;
+  --accent-contrast: #00161a;                 /* Text auf Akzentfläche */
+  --accent-dim: rgba(0, 229, 255, 0.12);
+  --accent-glow: rgba(0, 229, 255, 0.35);
+  --danger: #ff4d5e;
+
+  /* Schrift */
+  --font-display: 'Bebas Neue', 'Arial Narrow', sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  /* Maße */
+  --radius: 14px;
+  --radius-small: 9px;
+  --gap: 16px;
+  --content-width: 560px;                     /* maximale Breite des Inhalts */
+  --nav-height: 60px;
+}

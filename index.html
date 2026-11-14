@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ▼ Pro App anpassen (siehe README, Schritt 4) -->
+<title>Hello ZimmermannKI</title>
+<meta name="description" content="Beispiel-App des zimmermannki-pwa-template">
+<meta name="theme-color" content="#050607">
+<meta name="apple-mobile-web-app-title" content="Hello">
+<!-- ▲ Pro App anpassen -->
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="app__header">
+    <h1 class="app__title" id="appTitle">Hello ZimmermannKI</h1>
+    <button type="button" class="btn btn--small" id="installBtn" hidden>Installieren</button>
+  </header>
+
+  <main class="app__main">
+
+    <!-- ── Ansicht: Start ── -->
+    <section id="view-start" data-view="start">
+      <div class="card stack">
+        <h2 id="greeting">Hallo!</h2>
+        <div>
+          <label class="label" for="nameInput">Dein Name</label>
+          <input class="input" id="nameInput" type="text" autocomplete="off" maxlength="40" placeholder="z. B. Sven">
+        </div>
+        <p class="muted" id="startCount"></p>
+      </div>
+
+      <div class="card stack">
+        <h2>Notizen</h2>
+        <form class="row" id="noteForm">
+          <input class="input grow" id="noteInput" type="text" autocomplete="off" maxlength="200" placeholder="Neue Notiz" aria-label="Neue Notiz">
+          <button type="submit" class="btn">Hinzufügen</button>
+        </form>
+        <ul class="list" id="noteList"></ul>
+        <p class="muted" id="noteEmpty">Noch keine Notizen.</p>
+      </div>
+    </section>
+
+    <!-- ── Ansicht: Einstellungen ── -->
+    <section id="view-settings" data-view="settings" hidden>
+      <div class="card stack">
+        <h2>App</h2>
+        <dl class="facts">
+          <dt>Version</dt><dd class="mono" id="factVersion">–</dd>
+          <dt>Offline-Modus</dt><dd id="factSw">–</dd>
+          <dt>Installiert</dt><dd id="factInstalled">–</dd>
+        </dl>
+        <div class="row">
+          <button type="button" class="btn btn--ghost" id="checkUpdateBtn">Nach Update suchen</button>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Backup</h2>
+        <p class="muted" id="backupInfo">–</p>
+        <div class="row">
+          <button type="button" class="btn" id="exportBtn">Backup exportieren</button>
+          <button type="button" class="btn btn--ghost" id="importBtn">Backup importieren</button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+        </div>
+        <div class="row" id="undoRow" hidden>
+          <button type="button" class="btn btn--ghost" id="undoBtn">Letzten Import rückgängig machen</button>
+        </div>
+      </div>
+
+      <div class="card stack">
+        <h2>Speicher</h2>
+        <dl class="facts">
+          <dt>Status</dt><dd id="factStatus">–</dd>
+          <dt>Datenversion</dt><dd class="mono" id="factSchema">–</dd>
+          <dt>Dauerhaft</dt><dd id="factPersist">–</dd>
+          <dt>Letzte Änderung</dt><dd id="factChanged">–</dd>
+        </dl>
+        <p class="muted" id="problemInfo" hidden></p>
+        <div class="row">
+          <button type="button" class="btn btn--danger" id="resetBtn">Alle Daten dieser App löschen</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="app__nav" aria-label="Hauptnavigation">
+    <button type="button" class="nav-btn" data-nav="start" aria-current="page">Start</button>
+    <button type="button" class="nav-btn" data-nav="settings">Einstellungen</button>
+  </nav>
+</div>
+
+<!-- Bestätigungsdialog (wird von js/app.js befüllt) -->
+<dialog class="dialog" id="confirmDialog">
+  <h2 id="confirmTitle">Sicher?</h2>
+  <p id="confirmText"></p>
+  <div class="dialog__actions">
+    <button type="button" class="btn btn--ghost" id="confirmNo">Abbrechen</button>
+    <button type="button" class="btn" id="confirmYes">OK</button>
+  </div>
+</dialog>
+
+<!-- Reihenfolge wichtig: erst Konfiguration und Build-Info, dann die App.
+     Jedes Script hat ein eigenes Tag. Kein Code zwischen <script src> und </script>. -->
+<script src="app.config.js"></script>
+<script src="build.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

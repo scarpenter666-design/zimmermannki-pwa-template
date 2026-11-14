@@ -1,0 +1,52 @@
+# Veröffentlicht die App auf GitHub Pages.
+# Läuft bei jedem Push auf main (auch bei Uploads über die GitHub-Webseite).
+#
+# Einmalig im Repo einstellen:
+#   Settings → Pages → Build and deployment → Source: "GitHub Actions"
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Nie zwei Deployments gleichzeitig. Ein laufendes wird zu Ende geführt.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0   # ganze Historie, für das Datum in der Version
+
+      - name: Version und Dateiliste setzen
+        run: node tools/stamp.mjs --out _site
+
+      - name: Pages vorbereiten
+        uses: actions/configure-pages@v6
+
+      - name: Dateien hochladen
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v5

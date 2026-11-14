@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Icons erzeugen – zimmermannki-pwa-template</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #111; color: #eee; max-width: 760px; margin: 0 auto; padding: 24px; line-height: 1.5; }
+  h1 { font-size: 22px; }
+  label { display: block; margin: 14px 0 4px; font-size: 14px; color: #aaa; }
+  input[type=text] { padding: 8px; background: #222; color: #eee; border: 1px solid #444; border-radius: 6px; }
+  button { margin-top: 18px; padding: 10px 18px; font-size: 15px; background: #00e5ff; color: #001; border: 0; border-radius: 8px; cursor: pointer; }
+  button:disabled { opacity: .4; }
+  .grid { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 22px; }
+  figure { margin: 0; text-align: center; font-size: 12px; color: #aaa; }
+  figure img { display: block; width: 128px; height: 128px; background: repeating-conic-gradient(#333 0 25%, #222 0 50%) 0 0/16px 16px; }
+  code { background: #222; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h1>Icons aus icon.svg erzeugen</h1>
+<p>Diese Seite läuft komplett in deinem Browser. Es wird nichts hochgeladen.</p>
+<ol>
+  <li>Datei <code>icons/icon.svg</code> auswählen.</li>
+  <li>Hintergrundfarbe eintragen (gleich wie <code>--bg</code> in <code>css/tokens.css</code>).</li>
+  <li>Auf „Erzeugen“ klicken, Vorschau prüfen, dann „Alle herunterladen“.</li>
+  <li>Die vier PNG-Dateien in den Ordner <code>icons/</code> legen.</li>
+</ol>
+
+<label for="file">SVG-Datei</label>
+<input type="file" id="file" accept=".svg,image/svg+xml">
+
+<label for="bg">Hintergrundfarbe (für Maskable- und Apple-Icon)</label>
+<input type="text" id="bg" value="#050607">
+
+<label for="scale">Größe des Motivs im Maskable-Icon: <span id="scaleOut">80</span> %</label>
+<input type="range" id="scale" min="60" max="100" value="80">
+
+<div>
+  <button type="button" id="make" disabled>Erzeugen</button>
+  <button type="button" id="save" disabled>Alle herunterladen</button>
+</div>
+
+<div class="grid" id="preview"></div>
+<p id="hint" hidden>Der runde Ausschnitt zeigt, was Android vom Maskable-Icon mindestens sichtbar lässt. Das Motiv muss vollständig im Kreis liegen.</p>
+
+<script>
+  // Welche Dateien entstehen. mode: plain = SVG wie es ist,
+  // padded = Hintergrund + verkleinertes Motiv, filled = Hintergrund + volles Motiv
+  const TARGETS = [
+    { name: 'icon-192.png', size: 192, mode: 'plain' },
+    { name: 'icon-512.png', size: 512, mode: 'plain' },
+    { name: 'icon-maskable-512.png', size: 512, mode: 'padded' },
+    { name: 'apple-touch-icon.png', size: 180, mode: 'filled' }
+  ];
+
+  function loadSvg(svgText) {
+    return new Promise((resolve, reject) => {
+      // Feste Größe erzwingen, sonst rendern manche Browser SVGs ohne width/height nicht.
+      const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+      const root = doc.documentElement;
+      if (root.nodeName !== 'svg') { reject(new Error('Keine SVG-Datei')); return; }
+      root.setAttribute('width', '1024');
+      root.setAttribute('height', '1024');
+      const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(root)], { type: 'image/svg+xml' }));
+      const image = new Image();
+      image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
+      image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG konnte nicht gelesen werden')); };
+      image.src = url;
+    });
+  }
+
+  // Gibt [{ name, dataUrl }] zurück. Wird auch automatisiert aufgerufen.
+  async function renderIcons(svgText, background, maskScale) {
+    const image = await loadSvg(svgText);
+    return TARGETS.map(target => {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = target.size;
+      const ctx = canvas.getContext('2d');
+      if (target.mode !== 'plain') {
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, target.size, target.size);
+      }
+      const factor = target.mode === 'padded' ? maskScale : 1;
+      const inner = target.size * factor;
+      const offset = (target.size - inner) / 2;
+      ctx.drawImage(image, offset, offset, inner, inner);
+      return { name: target.name, dataUrl: canvas.toDataURL('image/png') };
+    });
+  }
+  window.renderIcons = renderIcons;
+
+  const $ = id => document.getElementById(id);
+  let svgText = '';
+  let results = [];
+
+  $('file').addEventListener('change', async event => {
+    const file = event.target.files[0];
+    svgText = file ? await file.text() : '';
+    $('make').disabled = !svgText;
+  });
+
+  $('scale').addEventListener('input', event => { $('scaleOut').textContent = event.target.value; });
+
+  $('make').addEventListener('click', async () => {
+    try {
+      results = await renderIcons(svgText, $('bg').value.trim() || '#000000', Number($('scale').value) / 100);
+    } catch (error) {
+      alert(error.message);
+      return;
+    }
+    const preview = $('preview');
+    preview.replaceChildren();
+    for (const result of results) {
+      const figure = document.createElement('figure');
+      const image = document.createElement('img');
+      image.src = result.dataUrl;
+      image.alt = result.name;
+      const caption = document.createElement('figcaption');
+      caption.textContent = result.name;
+      figure.append(image, caption);
+      preview.appendChild(figure);
+      if (result.name.includes('maskable')) {
+        const round = figure.cloneNode(true);
+        round.className = 'round';
+        round.querySelector('figcaption').textContent = 'Maskable, rund beschnitten';
+        // Android zeigt mindestens den inneren Kreis mit 80 % Durchmesser
+        round.querySelector('img').style.clipPath = 'circle(40%)';
+        preview.appendChild(round);
+      }
+    }
+    $('hint').hidden = false;
+    $('save').disabled = false;
+  });
+
+  $('save').addEventListener('click', () => {
+    results.forEach((result, index) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = result.dataUrl;
+        link.download = result.name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }, index * 300);
+    });
+  });
+</script>
+</body>
+</html>
