@@ -279,7 +279,9 @@ const backup = createBackup({
 });
 ```
 
-Der Service Worker versteht auch die alten Update-Nachrichten (`"skip"` und `{type:'SKIP_WAITING'}`). Der ausführliche Plan je App folgt in `docs/migrationsplan.md` (Phase 4).
+Der Service Worker versteht auch die alten Update-Nachrichten (`"skip"` und `{type:'SKIP_WAITING'}`). Der ausführliche Plan je App steht im Migrationsplan. Der liegt absichtlich nicht in diesem öffentlichen Repo.
+
+**Achtung beim Testen:** Eine Testkopie einer bestehenden App nie unter `scarpenter666-design.github.io` veröffentlichen. Sie würde dieselben Daten benutzen wie die echte App. Nur lokal oder unter einer eigenen Subdomain testen.
 
 ---
 
