@@ -296,11 +296,11 @@ $('undoBtn').addEventListener('click', async () => {
 $('lockBtn').addEventListener('click', () => location.reload());
 
 $('changeSecretBtn').addEventListener('click', async () => {
-  const oldSecret = await lockModule.askSecret({ title: 'Bisheriger PIN oder Passwort', okLabel: 'Weiter' });
+  const oldSecret = await lockModule.askSecret({ title: 'Bisheriges Passwort', okLabel: 'Weiter' });
   if (oldSecret === null) return;
   const newSecret = await lockModule.askSecret({
-    title: 'Neuer PIN oder neues Passwort',
-    text: 'Mindestens 6 Ziffern oder, besser, ein Passwort mit mindestens 8 Zeichen.',
+    title: 'Neues Passwort',
+    text: 'Mindestens 8 Zeichen. Ein PIN aus mindestens 6 Ziffern geht auch, schützt aber schwächer.',
     confirm: true,
     okLabel: 'Ändern'
   });

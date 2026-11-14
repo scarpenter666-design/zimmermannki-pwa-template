@@ -165,7 +165,7 @@ export async function openVault(options = {}) {
         { name: 'AES-GCM', iv: fromBase64(record.wrapped.iv) },
         { name: 'AES-GCM', length: 256 }, extractable, ['encrypt', 'decrypt']);
     } catch {
-      throw new CryptoError('wrong', 'PIN oder Passwort stimmt nicht.');
+      throw new CryptoError('wrong', 'Das Passwort stimmt nicht.');
     }
   }
 

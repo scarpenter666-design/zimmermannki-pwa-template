@@ -55,10 +55,10 @@ export function unlockApp({ vault, appName = self.APP_CONFIG && self.APP_CONFIG.
     form.noValidate = true;
     form.append(el('h1', 'app__title', appName || 'App'));
     form.append(el('p', null, isNew
-      ? 'Deine Daten werden verschlüsselt gespeichert. Vergib jetzt einen PIN (mindestens 6 Ziffern) oder besser ein Passwort (mindestens 8 Zeichen).'
-      : 'Bitte PIN oder Passwort eingeben.'));
+      ? 'Deine Daten werden verschlüsselt gespeichert. Vergib jetzt ein Passwort (mindestens 8 Zeichen). Ein PIN aus mindestens 6 Ziffern geht auch, schützt aber deutlich schwächer.'
+      : 'Bitte Passwort eingeben.'));
 
-    const first = secretInput('cpLockSecret', isNew ? 'PIN oder Passwort' : 'PIN oder Passwort', isNew ? 'new-password' : 'current-password');
+    const first = secretInput('cpLockSecret', isNew ? 'Passwort (oder PIN)' : 'Passwort', isNew ? 'new-password' : 'current-password');
     form.append(first.wrap);
 
     let second = null;
@@ -75,7 +75,7 @@ export function unlockApp({ vault, appName = self.APP_CONFIG && self.APP_CONFIG.
     form.append(hint, error);
 
     if (isNew) {
-      form.append(el('p', 'muted', 'Wichtig: Es gibt keine Hintertür. Wer PIN oder Passwort vergisst, kommt nicht mehr an die Daten. Mach regelmäßig ein Backup.'));
+      form.append(el('p', 'muted', 'Wichtig: Es gibt keine Hintertür. Wer das Passwort vergisst, kommt nicht mehr an die Daten. Mach regelmäßig ein Backup.'));
     }
 
     const submit = el('button', 'btn', isNew ? 'Speichern und starten' : 'Entsperren');
@@ -86,7 +86,7 @@ export function unlockApp({ vault, appName = self.APP_CONFIG && self.APP_CONFIG.
     // "PIN vergessen": nur Löschen ist möglich
     let forgot = null;
     if (!isNew) {
-      forgot = el('button', 'btn btn--ghost btn--small', 'PIN vergessen?');
+      forgot = el('button', 'btn btn--ghost btn--small', 'Passwort vergessen?');
       forgot.type = 'button';
       forgot.id = 'cpLockForgot';
       form.append(forgot);
@@ -148,7 +148,7 @@ export function unlockApp({ vault, appName = self.APP_CONFIG && self.APP_CONFIG.
       forgot.addEventListener('click', async () => {
         const typed = await askSecret({
           title: 'Alle Daten löschen?',
-          text: 'Ohne PIN oder Passwort lassen sich die Daten nicht entschlüsseln. Du kannst nur alles löschen und neu anfangen. Hast du ein Backup, kannst du es danach einspielen. Zum Bestätigen das Wort LÖSCHEN eintippen.',
+          text: 'Ohne Passwort lassen sich die Daten nicht entschlüsseln. Du kannst nur alles löschen und neu anfangen. Hast du ein Backup, kannst du es danach einspielen. Zum Bestätigen das Wort LÖSCHEN eintippen.',
           label: 'Bestätigung',
           okLabel: 'Endgültig löschen',
           plainText: true,
@@ -174,7 +174,7 @@ export function unlockApp({ vault, appName = self.APP_CONFIG && self.APP_CONFIG.
  * @param {boolean} [options.plainText=false] Eingabe sichtbar (für Bestätigungswörter)
  * @param {boolean} [options.danger=false]
  */
-export function askSecret({ title, text = '', label = 'PIN oder Passwort', confirm = false, okLabel = 'OK', plainText = false, danger = false }) {
+export function askSecret({ title, text = '', label = 'Passwort', confirm = false, okLabel = 'OK', plainText = false, danger = false }) {
   return new Promise(resolve => {
     const dialog = el('dialog', 'dialog');
     dialog.id = 'cpSecretDialog';
