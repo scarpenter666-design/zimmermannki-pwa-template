@@ -103,6 +103,7 @@ Die `id` muss sich von allen anderen Apps unterscheiden. Vergeben sind: `ironlog
 - Den Wert aus dem Template **nicht** stehen lassen. Zwei Apps mit derselben `id` auf `github.io` hält Chrome für dieselbe App.
 - Ein relativer Wert wie `./` funktioniert nicht. Er würde bei jeder App zu `/` und damit bei allen gleich.
 - Beim Veröffentlichen prüft `tools/stamp.mjs` den Wert. Passt er nicht zum Repo-Namen, steht im Reiter **Actions** eine gelbe Warnung.
+- Ausnahme für Bestands-Apps, deren `id` anders lauten muss (z. B. IronLog: `/IronLog/index.html`): den Sollwert in `app.config.js` bei `manifestId` eintragen. Dann prüft `stamp.mjs` gegen diesen Wert und warnt nur noch, wenn Manifest und `manifestId` voneinander abweichen.
 - Entscheide **vor** der ersten Veröffentlichung, ob die App auf `github.io` bleibt oder eine eigene Subdomain bekommt (Schritt 11). Davon hängt der Wert ab.
 
 ### Schritt 4 – `index.html`
@@ -281,6 +282,7 @@ Das Template ist dafür gebaut, alte Apps schrittweise zu übernehmen, ohne Date
 
 ```js
 // app.config.js einer alten App, Beispiel IronLog
+manifestId: '/IronLog/index.html',    // id im Manifest bleibt wie bisher
 storage: {
   schemaVersion: 1,
   legacyKeys: { state: 'ironlog4' },   // alter Key bleibt, gleiches Format

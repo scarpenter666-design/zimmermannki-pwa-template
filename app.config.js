@@ -13,6 +13,12 @@ self.APP_CONFIG = {
   name: 'Hello ZimmermannKI',
   shortName: 'Hello',
 
+  // Nur für Bestands-Apps: der Wert, den "id" in manifest.webmanifest
+  // haben MUSS, wenn er von der Regel abweicht (Regel: "/<Repo-Name>/",
+  // auf eigener Subdomain "/"). Beispiel IronLog: '/IronLog/index.html'.
+  // tools/stamp.mjs prüft das beim Veröffentlichen. Neue Apps: null lassen.
+  manifestId: null,
+
   storage: {
     // Aktuelle Version des Datenformats. Erhöhen, wenn sich die
     // Struktur ändert, und in js/app.js eine Migration ergänzen.

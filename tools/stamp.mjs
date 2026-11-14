@@ -18,6 +18,7 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -55,17 +56,35 @@ for (const required of ['index.html', 'sw.js', 'app.config.js', 'manifest.webman
   }
 }
 
+// ── Konfiguration lesen (app.config.js ist ein Browser-Script: in einer Sandbox ausführen) ──
+let config;
+try {
+  const sandbox = { self: {} };
+  runInNewContext(readFileSync(join(root, 'app.config.js'), 'utf8'), sandbox);
+  config = sandbox.self.APP_CONFIG;
+  if (!config || !/^[a-z0-9-]+$/.test(config.id || '')) throw new Error('"id" fehlt oder enthält unerlaubte Zeichen (erlaubt: a–z, 0–9, Bindestrich).');
+} catch (error) {
+  console.error('Fehler in app.config.js: ' + error.message);
+  process.exit(1);
+}
+
 // ── Manifest prüfen: "id" muss zur Adresse der App passen ──
-// Auf github.io heißt sie "/<Repo-Name>/", auf einer eigenen Subdomain "/".
+// Regel: auf github.io "/<Repo-Name>/", auf einer eigenen Subdomain "/".
+// Bestands-Apps legen ihren abweichenden Wert in app.config.js fest (manifestId).
 // Eine aus dem Template kopierte id würde zwei Apps für Chrome zur selben machen.
+const warn = text => console.warn(process.env.GITHUB_ACTIONS ? `::warning file=manifest.webmanifest::${text}` : `Warnung: ${text}`);
 try {
   const manifest = JSON.parse(readFileSync(join(root, 'manifest.webmanifest'), 'utf8'));
   const repo = (process.env.GITHUB_REPOSITORY || '').split('/')[1];
-  const ownDomain = files.includes('CNAME');
   if (!manifest.id) {
-    console.warn('Warnung: In manifest.webmanifest fehlt das Feld "id".');
-  } else if (repo && !ownDomain && manifest.id !== `/${repo}/` && manifest.id !== '/') {
-    console.warn(`::warning file=manifest.webmanifest::"id" ist "${manifest.id}", das Repo heißt "${repo}". Erwartet: "/${repo}/" (oder "/" bei eigener Subdomain).`);
+    warn('In manifest.webmanifest fehlt das Feld "id".');
+  } else if (config.manifestId) {
+    // Fester Sollwert aus app.config.js
+    if (manifest.id !== config.manifestId) {
+      warn(`"id" ist "${manifest.id}", in app.config.js ist manifestId "${config.manifestId}" festgelegt. Beide müssen gleich sein.`);
+    }
+  } else if (repo && manifest.id !== `/${repo}/` && manifest.id !== '/') {
+    warn(`"id" ist "${manifest.id}", das Repo heißt "${repo}". Erwartet: "/${repo}/" (oder "/" bei eigener Subdomain). Soll der Wert so bleiben, in app.config.js manifestId setzen.`);
   }
 } catch (error) {
   console.error('Fehler: manifest.webmanifest ist kein gültiges JSON. ' + error.message);
